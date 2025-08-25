@@ -1,15 +1,9 @@
 function merge(numberArray, left, mid, right) {
   const len1 = mid - left + 1;
   const len2 = right - mid;
-  const leftArray = [];
-  const rightArray = [];
+  const leftArray = numberArray.slice(left, left + len1);
+  const rightArray = numberArray.slice(mid + 1, mid + 1 + len2);
 
-  for (let i = left; i < left + len1; i++) {
-    leftArray.push(numberArray[i]);
-  }
-  for (let i = mid + 1; i <= mid + len2; i++) {
-    rightArray.push(numberArray[i]);
-  }
   let i = 0;
   let j = 0;
   let k = left;
@@ -33,7 +27,7 @@ function mergeSort(numberArray, left, right) {
   if (left >= right) {
     return;
   }
-  let mid = Math.floor((right + left) / 2);
+  let mid = left + Math.floor((right - left) / 2);
   mergeSort(numberArray, 0, mid);
   mergeSort(numberArray, mid + 1, right);
   merge(numberArray, left, mid, right);
