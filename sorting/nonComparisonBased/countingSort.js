@@ -36,6 +36,6 @@ function countingSort(numberArray, len) {
 (function driver() {
   const numberArray = [5, 2, 3, -1, 7, -11, 9, 2, 8, 6];
   console.log(numberArray);
-  const sortedArray = countingSort(numberArray, numberArray.length - 1);
+  const sortedArray = countingSort(numberArray, numberArray.length);
   console.log(sortedArray);
 })();
