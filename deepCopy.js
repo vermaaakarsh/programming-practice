@@ -9,21 +9,20 @@ function deepCopy(item) {
       array.push(value);
     }
     return array;
-  } else {
-    let object = {};
-    if (!item) {
-      return item;
-    }
-    let keys = Object.keys(item);
-    for (const key of keys) {
-      if (!key) {
-        continue;
-      }
-      let value = deepCopy(item[key]);
-      object[key] = value;
-    }
-    return object;
   }
+  let object = {};
+  if (!item) {
+    return item;
+  }
+  let keys = Object.keys(item);
+  for (const key of keys) {
+    if (!key) {
+      continue;
+    }
+    let value = deepCopy(item[key]);
+    object[key] = value;
+  }
+  return object;
 }
 let name1 = "undefine1d";
 let obj = [
