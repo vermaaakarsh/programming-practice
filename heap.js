@@ -37,10 +37,10 @@ class MinHeap extends Heap {
     let rightChild = i * 2 + 2;
     let minimum = i;
 
-    if (leftChild < n && this.heap[leftChild] < this.heap[minimum]) {
+    if (leftChild <= n && this.heap[leftChild] < this.heap[minimum]) {
       minimum = leftChild;
     }
-    if (rightChild < n && this.heap[rightChild] < this.heap[minimum]) {
+    if (rightChild <= n && this.heap[rightChild] < this.heap[minimum]) {
       minimum = rightChild;
     }
 
