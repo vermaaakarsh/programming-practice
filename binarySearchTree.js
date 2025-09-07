@@ -5,65 +5,51 @@ class TreeNode {
     this.right = null;
   }
 }
-
 class BST {
   constructor() {
     this.root = null;
   }
-  insertNode(val) {
-    let newNode = new TreeNode(val);
-    if (this.root === null) {
-      this.root = newNode;
-      return;
-    }
-    let prev;
-    let curr = this.root;
-    while (curr !== null) {
-      prev = curr;
-      if (newNode.val <= curr.val) {
-        curr = curr.left;
-      } else {
-        curr = curr.right;
-      }
-    }
-    if (newNode.val <= prev.val) {
-      prev.left = newNode;
-    } else {
-      prev.right = newNode;
-    }
+  noOfLevels(root) {
+    if (!root) return 0;
+    return (
+      1 + Math.max(this.noOfLevels(root.left), this.noOfLevels(root.right))
+    );
   }
-  deleteNodeMax(root, prev) {
-    if (root.right === null) {
-      if (prev.right === root) {
-        prev.right = root.left;
-      } else {
-        prev.left = root.left;
-      }
-      return root.val;
-    }
-    return this.deleteNodeMax(root.right, root);
-  }
-
-  deleteNode(root, val) {
+  insertNode(root, newNode) {
     if (root === null) {
-      console.log("Node not found!");
-      return root;
+      return newNode;
     }
-    if (val === root.val) {
-      if (root.left === null && root.right === null) {
-        return null;
-      } else if (root.left == null) {
-        return root.right;
-      } else if (root.right == null) {
-        return root.left;
-      } else {
-        root.val = this.deleteNodeMax(root.left, root);
-      }
-    } else if (val < root.val) {
-      root.left = this.deleteNode(root.left, val);
+    if (newNode.val <= root.val) {
+      root.left = this.insertNode(root.left, newNode);
     } else {
-      root.right = this.deleteNode(root.right, val);
+      root.right = this.insertNode(root.right, newNode);
     }
+    return root;
+  }
+  deleteNodeMax(root) {
+    if (!root.right) {
+      return { newRoot: root.left, maxVal: root.val };
+    }
+    const { newRoot, maxVal } = this.deleteNodeMax(root.right);
+    root.right = newRoot;
+    return { newRoot: root, maxVal };
+  }
+  deleteNode(root, val) {
+    if (!root) return root;
+
+    if (val < root.val) {
+      root.left = this.deleteNode(root.left, val);
+    } else if (val > root.val) {
+      root.right = this.deleteNode(root.right, val);
+    } else {
+      if (!root.left) return root.right;
+      if (!root.right) return root.left;
+
+      const { newRoot, maxVal } = this.deleteNodeMax(root.left);
+      root.val = maxVal;
+      root.left = newRoot;
+    }
+
     return root;
   }
   preOrderTraversal(root) {
@@ -84,72 +70,119 @@ class BST {
     this.postOrderTraversal(root.right);
     process.stdout.write(`${root.val} `);
   }
+  displayTree(root, prefix = "", isLeft = true) {
+    if (!root) return;
+    if (root.right) {
+      this.displayTree(root.right, prefix + (isLeft ? "│   " : "    "), false);
+    }
+    console.log(prefix + (isLeft ? "└── " : "┌── ") + root.val);
+    if (root.left) {
+      this.displayTree(root.left, prefix + (isLeft ? "    " : "│   "), true);
+    }
+  }
+  searchNode(root, val) {
+    if (!root) {
+      return false;
+    }
+    if (root.val === val) {
+      return true;
+    }
+    if (val < root.val) {
+      return this.searchNode(root.left, val);
+    }
+    return this.searchNode(root.right, val);
+  }
 }
 (function driver() {
   const bst = new BST();
-  let phase = "insert";
+  let mode = "insert"; // default mode
 
   process.stdin.setEncoding("utf8");
   process.stdin.resume();
 
-  console.log("Enter nodes of the BST (type 'done' when finished):");
+  console.log("Binary Search Tree Interactive CLI");
+  console.log(
+    "Modes: insert | delete | search | exit\nCommands: preorder | inorder | postorder | levels"
+  );
+  console.log("You are in INSERT mode by default. Enter a number to insert:");
 
   process.stdin.on("data", (chunk) => {
-    const userInput = chunk.trim();
+    const input = chunk.trim().toLowerCase();
 
-    // Handle sentinel value
-    if (userInput.toLowerCase() === "done") {
-      if (phase === "insert") {
-        // Print initial traversals
-        console.log("\nInitial Traversals:");
-        process.stdout.write("Pre-order: ");
-        bst.preOrderTraversal(bst.root);
-        console.log();
-        process.stdout.write("In-order: ");
-        bst.inOrderTraversal(bst.root);
-        console.log();
-        process.stdout.write("Post-order: ");
-        bst.postOrderTraversal(bst.root);
-        console.log();
-
-        // Switch to delete phase
-        phase = "delete";
-        console.log("\nEnter numbers to delete (type 'done' to exit):");
-      } else if (phase === "delete") {
-        console.log("\nExiting program...");
-        process.exit(0);
-      }
+    // Handle global commands
+    if (["insert", "delete", "search"].includes(input)) {
+      mode = input;
+      console.log(`\nSwitched to ${mode.toUpperCase()} mode.`);
+      if (mode === "insert") console.log("Enter a number to insert:");
+      if (mode === "delete") console.log("Enter a number to delete:");
+      if (mode === "search") console.log("Enter a number to search:");
       return;
     }
 
-    // Insert phase
-    if (phase === "insert") {
-      const num = parseInt(userInput, 10);
-      if (!isNaN(num)) {
-        bst.insertNode(num);
-      } else {
-        console.log(`Invalid input (not an integer): ${userInput}`);
-      }
+    if (input === "exit") {
+      console.log("\nExiting program...");
+      process.exit(0);
     }
 
-    // Delete phase
-    else if (phase === "delete") {
-      const num = parseInt(userInput, 10);
-      if (!isNaN(num)) {
-        bst.root = bst.deleteNode(bst.root, num);
-        console.log(`\nDeleted ${num}. Current Traversals:`);
-        process.stdout.write("Pre-order: ");
-        bst.preOrderTraversal(bst.root);
-        console.log();
-        process.stdout.write("In-order: ");
-        bst.inOrderTraversal(bst.root);
-        console.log();
-        process.stdout.write("Post-order: ");
-        bst.postOrderTraversal(bst.root);
-        console.log();
-      } else {
-        console.log(`Invalid input (not an integer): ${userInput}`);
-      }
+    if (input === "preorder") {
+      process.stdout.write("\nPre-order traversal: ");
+      bst.preOrderTraversal(bst.root);
+      console.log();
+      return;
     }
+
+    if (input === "inorder") {
+      process.stdout.write("\nIn-order traversal: ");
+      bst.inOrderTraversal(bst.root);
+      console.log();
+      return;
+    }
+
+    if (input === "postorder") {
+      process.stdout.write("\nPost-order traversal: ");
+      bst.postOrderTraversal(bst.root);
+      console.log();
+      return;
+    }
+
+    if (input === "levels") {
+      console.log(`\nHeight of tree: ${bst.noOfLevels(bst.root)}`);
+      return;
+    }
+
+    // Handle numeric input
+    const num = parseInt(input, 10);
+    if (isNaN(num)) {
+      console.log(
+        `Invalid input: ${input}. Enter a number, a mode command, or a traversal/levels command.`
+      );
+      return;
+    }
+
+    // Perform action based on current mode
+    switch (mode) {
+      case "insert":
+        bst.root = bst.insertNode(bst.root, new TreeNode(num));
+        console.log(`\nInserted ${num}. Current Tree:`);
+        bst.displayTree(bst.root);
+        break;
+
+      case "delete":
+        bst.root = bst.deleteNode(bst.root, num);
+        console.log(`\nDeleted ${num} (if it existed). Current Tree:`);
+        bst.displayTree(bst.root);
+        break;
+
+      case "search":
+        bst.displayTree(bst.root);
+        if (bst.searchNode(bst.root, num)) {
+          console.log(`\nValue ${num} exists in the tree.`);
+        } else {
+          console.log(`\nValue ${num} does NOT exist in the tree.`);
+        }
+        break;
+    }
+
+    console.log(`\n(Current mode: ${mode.toUpperCase()}) Enter next input:`);
   });
 })();
