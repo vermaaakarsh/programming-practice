@@ -38,10 +38,10 @@ class AVLTree {
     this.updateHeight(newRoot);
     return newRoot;
   }
-  noOfLevels(root) {
-    if (!root) return 0;
+  noOfLevels(node = this.root) {
+    if (!node) return 0;
     return (
-      1 + Math.max(this.noOfLevels(root.left), this.noOfLevels(root.right))
+      1 + Math.max(this.noOfLevels(node.left), this.noOfLevels(node.right))
     );
   }
   balanceTree(root) {
@@ -66,16 +66,21 @@ class AVLTree {
 
     return root;
   }
-  insertNode(root, newNode) {
-    if (root === null) {
+  insertNode(newNode, node = this.root) {
+    if (!node) {
+      if (node === this.root) this.root = newNode;
       return newNode;
     }
-    if (newNode.val <= root.val) {
-      root.left = this.insertNode(root.left, newNode);
+
+    if (newNode.val <= node.val) {
+      node.left = this.insertNode(newNode, node.left);
     } else {
-      root.right = this.insertNode(root.right, newNode);
+      node.right = this.insertNode(newNode, node.right);
     }
-    return this.balanceTree(root);
+
+    const balancedNode = this.balanceTree(node);
+    if (node === this.root) this.root = balancedNode;
+    return balancedNode;
   }
   deleteNodeMax(root) {
     if (!root.right) {
@@ -85,69 +90,66 @@ class AVLTree {
     root.right = newRoot;
     return { newRoot: this.balanceTree(root), maxVal };
   }
-  deleteNode(root, val) {
-    if (!root) return root;
+  deleteNode(val, node = this.root) {
+    if (!node) return null;
 
-    if (val < root.val) {
-      root.left = this.deleteNode(root.left, val);
-    } else if (val > root.val) {
-      root.right = this.deleteNode(root.right, val);
+    if (val < node.val) {
+      node.left = this.deleteNode(val, node.left);
+    } else if (val > node.val) {
+      node.right = this.deleteNode(val, node.right);
     } else {
-      if (!root.left) return root.right;
-      if (!root.right) return root.left;
+      if (!node.left) return node.right;
+      if (!node.right) return node.left;
 
-      const { newRoot, maxVal } = this.deleteNodeMax(root.left);
-      root.val = maxVal;
-      root.left = newRoot;
+      const { newRoot, maxVal } = this.deleteNodeMax(node.left);
+      node.val = maxVal;
+      node.left = newRoot;
     }
 
-    return this.balanceTree(root);
+    const balancedNode = this.balanceTree(node);
+    if (node === this.root) this.root = balancedNode;
+    return balancedNode;
   }
-  preOrderTraversal(root) {
-    if (root === null) return;
-    process.stdout.write(`${root.val} `);
-    this.preOrderTraversal(root.left);
-    this.preOrderTraversal(root.right);
+  preOrderTraversal(node = this.root) {
+    if (!node) return;
+    process.stdout.write(`${node.val} `);
+    this.preOrderTraversal(node.left);
+    this.preOrderTraversal(node.right);
   }
-  inOrderTraversal(root) {
-    if (root === null) return;
-    this.inOrderTraversal(root.left);
-    process.stdout.write(`${root.val} `);
-    this.inOrderTraversal(root.right);
+  inOrderTraversal(node = this.root) {
+    if (!node) return;
+    this.inOrderTraversal(node.left);
+    process.stdout.write(`${node.val} `);
+    this.inOrderTraversal(node.right);
   }
-  postOrderTraversal(root) {
-    if (root === null) return;
-    this.postOrderTraversal(root.left);
-    this.postOrderTraversal(root.right);
-    process.stdout.write(`${root.val} `);
+  postOrderTraversal(node = this.root) {
+    if (!node) return;
+    this.postOrderTraversal(node.left);
+    this.postOrderTraversal(node.right);
+    process.stdout.write(`${node.val} `);
   }
-  displayTree(root, prefix = "", isLeft = true) {
-    if (!root) return;
-    if (root.right) {
-      this.displayTree(root.right, prefix + (isLeft ? "│   " : "    "), false);
+  displayTree(node = this.root, prefix = "", isLeft = true) {
+    if (!node) return;
+    if (node.right) {
+      this.displayTree(node.right, prefix + (isLeft ? "│   " : "    "), false);
     }
-    console.log(prefix + (isLeft ? "└── " : "┌── ") + root.val);
-    if (root.left) {
-      this.displayTree(root.left, prefix + (isLeft ? "    " : "│   "), true);
+    console.log(prefix + (isLeft ? "└── " : "┌── ") + node.val);
+    if (node.left) {
+      this.displayTree(node.left, prefix + (isLeft ? "    " : "│   "), true);
     }
   }
-  searchNode(root, val) {
-    if (!root) {
-      return false;
-    }
-    if (root.val === val) {
-      return true;
-    }
-    if (val < root.val) {
-      return this.searchNode(root.left, val);
-    }
-    return this.searchNode(root.right, val);
+  searchNode(val, node = this.root) {
+    if (!node) return false;
+    if (node.val === val) return true;
+    return val < node.val
+      ? this.searchNode(val, node.left)
+      : this.searchNode(val, node.right);
   }
 }
 
 (function driver() {
   const avlTree = new AVLTree();
-  let mode = "insert"; // default mode
+  let mode = "insert";
 
   process.stdin.setEncoding("utf8");
   process.stdin.resume();
@@ -161,13 +163,9 @@ class AVLTree {
   process.stdin.on("data", (chunk) => {
     const input = chunk.trim().toLowerCase();
 
-    // Handle global commands
     if (["insert", "delete", "search"].includes(input)) {
       mode = input;
       console.log(`\nSwitched to ${mode.toUpperCase()} mode.`);
-      if (mode === "insert") console.log("Enter a number to insert:");
-      if (mode === "delete") console.log("Enter a number to delete:");
-      if (mode === "search") console.log("Enter a number to search:");
       return;
     }
 
@@ -176,65 +174,57 @@ class AVLTree {
       process.exit(0);
     }
 
-    if (input === "preorder") {
-      process.stdout.write("\nPre-order traversal: ");
-      avlTree.preOrderTraversal(avlTree.root);
-      console.log();
+    if (["preorder", "inorder", "postorder", "levels"].includes(input)) {
+      switch (input) {
+        case "preorder":
+          process.stdout.write("\nPre-order traversal: ");
+          avlTree.preOrderTraversal();
+          console.log();
+          break;
+        case "inorder":
+          process.stdout.write("\nIn-order traversal: ");
+          avlTree.inOrderTraversal();
+          console.log();
+          break;
+        case "postorder":
+          process.stdout.write("\nPost-order traversal: ");
+          avlTree.postOrderTraversal();
+          console.log();
+          break;
+        case "levels":
+          console.log(`\nHeight of tree: ${avlTree.noOfLevels()}`);
+          break;
+      }
       return;
     }
 
-    if (input === "inorder") {
-      process.stdout.write("\nIn-order traversal: ");
-      avlTree.inOrderTraversal(avlTree.root);
-      console.log();
-      return;
-    }
-
-    if (input === "postorder") {
-      process.stdout.write("\nPost-order traversal: ");
-      avlTree.postOrderTraversal(avlTree.root);
-      console.log();
-      return;
-    }
-
-    if (input === "levels") {
-      console.log(`\nHeight of tree: ${avlTree.noOfLevels(avlTree.root)}`);
-      return;
-    }
-
-    // Handle numeric input
     const num = parseInt(input, 10);
     if (isNaN(num)) {
-      console.log(
-        `Invalid input: ${input}. Enter a number, a mode command, or a traversal/levels command.`
-      );
+      console.log(`Invalid input: ${input}.`);
       return;
     }
 
-    // Perform action based on current mode
     switch (mode) {
       case "insert":
-        avlTree.root = avlTree.insertNode(avlTree.root, new TreeNode(num));
+        avlTree.insertNode(new TreeNode(num));
         console.log(`\nInserted ${num}. Current Tree:`);
-        avlTree.displayTree(avlTree.root);
+        avlTree.displayTree();
         break;
 
       case "delete":
-        avlTree.root = avlTree.deleteNode(avlTree.root, num);
+        avlTree.deleteNode(num);
         console.log(`\nDeleted ${num} (if it existed). Current Tree:`);
-        avlTree.displayTree(avlTree.root);
+        avlTree.displayTree();
         break;
 
       case "search":
-        avlTree.displayTree(avlTree.root);
-        if (avlTree.searchNode(avlTree.root, num)) {
-          console.log(`\nValue ${num} exists in the tree.`);
-        } else {
-          console.log(`\nValue ${num} does NOT exist in the tree.`);
-        }
+        avlTree.displayTree();
+        console.log(
+          avlTree.searchNode(num)
+            ? `\nValue ${num} exists in the tree.`
+            : `\nValue ${num} does NOT exist in the tree.`
+        );
         break;
     }
-
-    console.log(`\n(Current mode: ${mode.toUpperCase()}) Enter next input:`);
   });
 })();
